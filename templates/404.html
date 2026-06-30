@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}404 — Sayfa Bulunamadı | Dokushoka{% endblock %}
+{% block content %}
+<div style="text-align:center; padding: 4rem 1rem;">
+  <h1 style="font-size:5rem; margin-bottom:0.5rem; color:var(--color-ai);">404</h1>
+  <h2 style="font-family:'Shippori Mincho',serif; margin-bottom:1rem;">Sayfa Bulunamadı</h2>
+  <p style="color:var(--color-sumi); margin-bottom:2rem;">Aradığınız sayfa taşınmış veya silinmiş olabilir.</p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Ana Sayfaya Dön</a>
+</div>
+{% endblock %}

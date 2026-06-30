@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="page-title">Arama Sonuçları: "{{ query }}"</h2>
+
+{% if total is defined and total == 0 %}
+<p>Aramanızla eşleşen kitap bulunamadı.</p>
+{% endif %}
+
+<div class="book-grid">
+    {% for book in books %}
+        <div class="book-card">
+            <span class="hanko-badge" title="Kitap">書</span>
+            {% if book[4] %}
+                <img src="{{ book[4] }}" alt="{{ book[1] }} kapağı">
+            {% else %}
+                <img src="https://via.placeholder.com/200x300?text=No+Image" alt="Kapak yok">
+            {% endif %}
+            <h3>{{ book[1] }}</h3>
+            <p><strong>Yazar:</strong> {{ book[2] }}</p>
+            <p>{{ book[3][:100] }}{% if book[3] and book[3]|length > 100 %}...{% endif %}</p>
+            <a class="btn btn-secondary" href="{{ url_for('kitap_detay', book_id=book[0]) }}">Detaylar</a>
+        </div>
+    {% endfor %}
+</div>
+
+{% if total_pages > 1 %}
+<nav class="pagination" aria-label="Sayfalama">
+    {% if page > 1 %}
+        <a href="{{ url_for('arama_sonuc', q=query, page=page-1) }}">← Önceki</a>
+    {% else %}
+        <span class="disabled">← Önceki</span>
+    {% endif %}
+
+    <span class="current">{{ page }} / {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('arama_sonuc', q=query, page=page+1) }}">Sonraki →</a>
+    {% else %}
+        <span class="disabled">Sonraki →</span>
+    {% endif %}
+</nav>
+{% endif %}
+
+{% endblock %}

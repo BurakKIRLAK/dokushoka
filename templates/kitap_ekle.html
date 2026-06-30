@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{% if is_edit %}Kitabı Düzenle{% else %}Yeni Kitap Ekle{% endif %} — Dokushoka{% endblock %}
+{% block content %}
+
+<h1 class="page-title">
+    <i class="fas fa-{% if is_edit %}edit{% else %}plus-circle{% endif %}" aria-hidden="true"></i>
+    {% if is_edit %}Kitabı Düzenle{% else %}Yeni Kitap Ekle{% endif %}
+</h1>
+
+<form method="POST"
+      enctype="multipart/form-data"
+      class="book-form-layout"
+      id="book-form"
+      {% if is_edit %}
+      action="{{ url_for('kitap_duzenle', book_id=book.id) }}"
+      {% else %}
+      action="{{ url_for('kitap_ekle') }}"
+      {% endif %}>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {# ---- LEFT: Cover Preview ---- #}
+    <div class="book-form-cover-col">
+        <div class="cover-preview-wrapper" id="cover-preview-wrapper">
+            <img
+                id="cover-preview-img"
+                src="{% if is_edit and book.image_url %}{{ book.image_url }}{% else %}/static/images/default.jpg{% endif %}"
+                alt="Kapak önizlemesi"
+                class="cover-preview-img"
+            >
+            <label for="kapak" class="cover-upload-label">
+                <i class="fas fa-camera" aria-hidden="true"></i>
+                <span>Kapak Seç</span>
+                <input type="file" id="kapak" name="kapak" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+            </label>
+        </div>
+        <p class="form-hint" style="text-align:center;">PNG, JPG, GIF veya WEBP — maks. 5 MB</p>
+    </div>
+
+    {# ---- RIGHT: Form Fields ---- #}
+    <div class="book-form-fields-col">
+        <div class="book-form-group">
+            <label for="baslik" class="book-form-label">Başlık <span class="required-mark">*</span></label>
+            <input type="text" id="baslik" name="baslik"
+                   value="{% if is_edit %}{{ book.title }}{% endif %}"
+                   placeholder="Kitabın başlığını girin" required class="book-form-input">
+        </div>
+
+        <div class="book-form-group">
+            <label for="yazar" class="book-form-label">Yazar <span class="required-mark">*</span></label>
+            <input type="text" id="yazar" name="yazar"
+                   value="{% if is_edit %}{{ book.author }}{% endif %}"
+                   placeholder="Yazarın adını girin" required class="book-form-input">
+        </div>
+
+        <div class="book-form-group">
+            <label for="aciklama" class="book-form-label">Açıklama</label>
+            <textarea id="aciklama" name="aciklama" rows="5"
+                      maxlength="1000"
+                      placeholder="Kitap hakkında kısa bir açıklama yazın..."
+                      class="book-form-input book-form-textarea">{% if is_edit %}{{ book.description }}{% endif %}</textarea>
+            <p class="char-counter" id="char-counter">0 / 1000 karakter</p>
+        </div>
+
+        <div class="book-form-group">
+            <label for="genre" class="book-form-label">Tür</label>
+            <select id="genre" name="genre" class="book-form-input book-form-select">
+                <option value="">— Seçiniz —</option>
+                {% for g_val in ['Roman', 'Felsefe', 'Tarih', 'Şiir', 'Biyografi', 'Klasik', 'Diğer'] %}
+                <option value="{{ g_val }}"
+                    {% if is_edit and book.genre == g_val %}selected{% endif %}>{{ g_val }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="book-form-row">
+            <div class="book-form-group">
+                <label for="publish_year" class="book-form-label">Yayın Yılı</label>
+                <input type="number" id="publish_year" name="publish_year"
+                       value="{% if is_edit %}{{ book.publish_year or '' }}{% endif %}"
+                       placeholder="ör. 1956" min="1000" max="2099" class="book-form-input">
+            </div>
+            <div class="book-form-group">
+                <label for="page_count" class="book-form-label">Sayfa Sayısı</label>
+                <input type="number" id="page_count" name="page_count"
+                       value="{% if is_edit %}{{ book.page_count or '' }}{% endif %}"
+                       placeholder="ör. 320" min="1" class="book-form-input">
+            </div>
+        </div>
+
+        <div class="book-form-group">
+            <label for="publisher" class="book-form-label">Yayınevi</label>
+            <input type="text" id="publisher" name="publisher"
+                   value="{% if is_edit %}{{ book.publisher or '' }}{% endif %}"
+                   placeholder="ör. Can Yayınları" class="book-form-input">
+        </div>
+
+        <div class="book-form-group">
+            <label for="isbn" class="book-form-label">ISBN</label>
+            <input type="text" id="isbn" name="isbn"
+                   value="{% if is_edit %}{{ book.isbn or '' }}{% endif %}"
+                   placeholder="ör. 978-3-16-148410-0" class="book-form-input">
+        </div>
+
+        <button type="submit" class="btn btn-cta book-form-submit">
+            <i class="fas fa-{% if is_edit %}save{% else %}plus{% endif %}" aria-hidden="true"></i>
+            {% if is_edit %}Kitabı Güncelle{% else %}Kitabı Ekle{% endif %}
+        </button>
+    </div>
+</form>
+
+<script>
+// Live cover preview
+document.getElementById('kapak').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            document.getElementById('cover-preview-img').src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Live character counter
+const textarea = document.getElementById('aciklama');
+const counter  = document.getElementById('char-counter');
+function updateCounter() {
+    const len = textarea.value.length;
+    counter.textContent = len + ' / 1000 karakter';
+    counter.style.color = len > 900 ? 'var(--color-shu)' : '';
+}
+textarea.addEventListener('input', updateCounter);
+updateCounter();
+</script>
+
+{% endblock %}

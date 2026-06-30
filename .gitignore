@@ -1,0 +1,34 @@
+# Environment variables — never commit real secrets
+.env
+
+# Database file — runtime artifact, never commit
+database.db
+
+# Python virtual environment
+venv/
+env/
+.venv/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pycache
+
+# User uploads — runtime artifacts
+static/uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pip bootstrap script (vendored, do not commit changes)
+get-pip.py

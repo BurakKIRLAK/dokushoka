@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-card">
+    <h2>Giriş Yap</h2>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>E-posta</label>
+        <input type="email" name="email" required>
+
+        <label>Şifre</label>
+        <input type="password" name="password" required>
+
+        <button type="submit" class="btn">Giriş Yap</button>
+    </form>
+
+    <p style="text-align:center; margin:1em 0;">Ya da</p>
+
+    <a href="{{ url_for('login_google') }}" class="google-btn">
+        <img src="{{ url_for('static', filename='images/google_logo.png') }}" alt="Google Logo" style="width:20px; vertical-align:middle; margin-right:0.5em;">
+        Google ile Giriş
+    </a>
+
+    <p style="text-align:center; margin-top:1em;">
+        Hesabınız yok mu? <a href="{{ url_for('register') }}">Kayıt Ol</a>
+    </p>
+</div>
+{% endblock %}

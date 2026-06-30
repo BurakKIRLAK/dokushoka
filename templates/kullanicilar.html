@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Tüm Kullanıcılar — Dokushoka{% endblock %}
+{% block content %}
+
+<h1 class="page-title"><i class="fas fa-users" aria-hidden="true"></i> Tüm Kullanıcılar</h1>
+<p class="admin-owner-notice">
+    <i class="fas fa-crown" aria-hidden="true"></i>
+    Bu sayfa yalnızca site sahibine görünür.
+</p>
+
+<form method="GET" action="{{ url_for('tum_kullanicilar') }}" class="admin-search-form">
+    <input type="text" name="q" value="{{ search }}" placeholder="Ad veya e-posta ara..." class="admin-search-input">
+    <button type="submit" class="btn btn-primary">Ara</button>
+    {% if search %}
+    <a href="{{ url_for('tum_kullanicilar') }}" class="btn btn-secondary">Temizle</a>
+    {% endif %}
+</form>
+
+<div class="admin-table-wrapper">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Ad Soyad</th>
+                <th>E-posta</th>
+                <th>Rol</th>
+                <th>Kitap</th>
+                <th>Yorum</th>
+                <th>İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>{{ u[0] }}</td>
+                <td>{{ u[1] }}</td>
+                <td>{{ u[2] }}</td>
+                <td>
+                    {% if u[2].lower() == owner_email %}
+                    <span class="role-badge role-badge--owner">OWNER</span>
+                    {% else %}
+                    <span class="role-badge role-badge--{{ u[3] }}">{{ u[3] | upper }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ u[4] }}</td>
+                <td>{{ u[5] }}</td>
+                <td>
+                    {% if u[2].lower() == owner_email %}
+                    <span class="owner-protected">—</span>
+                    {% else %}
+                        {% if u[3] != 'admin' %}
+                        <form method="POST" action="{{ url_for('kullanici_rol_degistir', user_id=u[0]) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="target_role" value="admin">
+                            <button type="submit" class="btn-action btn-approve"
+                                    onclick="return confirm('Bu kullanıcıyı admin yapmak istediğinize emin misiniz?')">
+                                <i class="fas fa-shield-alt" aria-hidden="true"></i> Admin Yap
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('kullanici_rol_degistir', user_id=u[0]) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="target_role" value="user">
+                            <button type="submit" class="btn-action btn-revoke"
+                                    onclick="return confirm('Bu kullanıcının adminliğini geri almak istediğinize emin misiniz?')">
+                                <i class="fas fa-user-times" aria-hidden="true"></i> Adminliği Geri Al
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;">Kullanıcı bulunamadı.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

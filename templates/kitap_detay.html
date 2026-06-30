@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} — Dokushoka{% endblock %}
+{% block content %}
+
+<div class="book-detail-card">
+    <div class="book-header">
+        <img src="{{ book.image_url | default('https://via.placeholder.com/200x300?text=No+Image') }}"
+             alt="{{ book.title }} kapağı" class="book-cover">
+        <div class="book-info">
+            <h2 class="book-title">{{ book.title }}</h2>
+            <p class="book-author">Yazar: {{ book.author }}</p>
+            {% if book.genre %}
+            <p class="book-meta"><span class="meta-label">Tür:</span> {{ book.genre }}</p>
+            {% endif %}
+            {% if book.publish_year %}
+            <p class="book-meta"><span class="meta-label">Yayın Yılı:</span> {{ book.publish_year }}</p>
+            {% endif %}
+            {% if book.page_count %}
+            <p class="book-meta"><span class="meta-label">Sayfa:</span> {{ book.page_count }}</p>
+            {% endif %}
+            {% if book.publisher %}
+            <p class="book-meta"><span class="meta-label">Yayınevi:</span> {{ book.publisher }}</p>
+            {% endif %}
+            {% if book.isbn %}
+            <p class="book-meta"><span class="meta-label">ISBN:</span> {{ book.isbn }}</p>
+            {% endif %}
+            <p class="book-description">{{ book.description }}</p>
+
+            <div class="rating-display">
+                {% for i in range(1,6) %}
+                    <span class="star {% if i <= avg_rating|round(0,'floor') %}filled{% endif %}">&#9733;</span>
+                {% endfor %}
+                <span class="avg-rating">({{ avg_rating|round(1) }} / 5)</span>
+                {% if session.get('user_id') %}
+                <button id="rate-btn" class="rate-btn" type="button">Değerlendirme Yap</button>
+                {% endif %}
+            </div>
+
+            {# --- Edit / Delete buttons (permission-aware) --- #}
+            {% if g.user and can_edit_book(g.user, book) %}
+            <div class="book-actions">
+                <a href="{{ url_for('kitap_duzenle', book_id=book.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-edit" aria-hidden="true"></i> Düzenle
+                </a>
+                <form method="POST" action="{{ url_for('kitap_sil', book_id=book.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-action btn-reject"
+                            onclick="return confirm('Bu kitabı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')">
+                        <i class="fas fa-trash" aria-hidden="true"></i> Kitabı Sil
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="comments-section">
+        <h3>
+            <svg class="sakura-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="12" cy="8" r="3"/><circle cx="8" cy="12" r="3"/><circle cx="16" cy="12" r="3"/><circle cx="10" cy="16" r="3"/><circle cx="14" cy="16" r="3"/>
+            </svg>
+            Yorumlar
+        </h3>
+        {% for comment in comments %}
+        <div class="comment-card">
+            <div class="comment-user">
+                <img src="{{ comment['profile_pic'] | default('/static/images/default.jpg') }}"
+                     alt="{{ comment['username'] }}" class="comment-user-pic">
+                <span class="comment-username">{{ comment['username'] }}</span>
+            </div>
+            <p class="comment-text">{{ comment['comment'] }}</p>
+            {# Delete button: admin and owner only — server-side enforced too #}
+            {% if g.user and get_effective_role(g.user) in ('admin', 'owner') %}
+            <form method="POST"
+                  action="{{ url_for('yorum_sil', book_id=book.id, comment_id=comment['id']) }}"
+                  class="comment-delete-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="comment-delete-btn" aria-label="Yorumu sil"
+                        onclick="return confirm('Yorumu silmek istediğinize emin misiniz?')">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% else %}
+        <p>Henüz yorum yapılmamış. İlk yorumu siz yazın!</p>
+        {% endfor %}
+
+        {% if session.get('user_id') %}
+        <form method="POST" class="add-comment-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <textarea name="yorum" placeholder="Yorumunuzu yazın..." required></textarea>
+            <button type="submit">Gönder</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div id="rating-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" aria-label="Kapat">&times;</span>
+        <h3>Bu kitabı değerlendir</h3>
+        <div class="stars-rate">
+            {% for i in range(1,6) %}
+                <span class="rate-star" data-value="{{ i }}">&#9733;</span>
+            {% endfor %}
+        </div>
+        <button id="submit-rating" type="button">Gönder</button>
+    </div>
+</div>
+
+<script>
+const modal = document.getElementById("rating-modal");
+const btn = document.getElementById("rate-btn");
+const span = document.querySelector(".close");
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+btn?.addEventListener("click", () => { modal.style.display = "block"; });
+span?.addEventListener("click", () => { modal.style.display = "none"; });
+window.addEventListener("click", (e) => { if(e.target === modal) modal.style.display = "none"; });
+
+const stars = document.querySelectorAll('.rate-star');
+let selectedRating = 0;
+stars.forEach(star => {
+    star.addEventListener('mouseover', () => highlightStars(star.dataset.value));
+    star.addEventListener('click', () => {
+        selectedRating = star.dataset.value;
+        highlightStars(selectedRating);
+    });
+});
+function highlightStars(value) {
+    stars.forEach(star => {
+        star.classList[value >= star.dataset.value ? 'add' : 'remove']('filled');
+    });
+}
+
+document.getElementById("submit-rating")?.addEventListener('click', () => {
+    if(selectedRating > 0) {
+        fetch("", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: "rating=" + selectedRating + "&csrf_token=" + encodeURIComponent(csrfToken)
+        }).then(() => location.reload());
+    }
+});
+</script>
+
+{% endblock %}

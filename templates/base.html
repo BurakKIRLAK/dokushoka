@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>{% block title %}Dokushoka{% endblock %}</title>
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="navbar">
+      <a href="{{ url_for('index') }}" class="logo">
+        <svg class="torii-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 10h16M6 10V6h12v4M8 10v8M16 10v8M3 6h18"/>
+        </svg>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Dokushoka Logo">
+      </a>
+    </div>
+    <div class="nav-links">
+      <nav>
+        {% if g.user %}
+          {% set effective_role = get_effective_role(g.user) %}
+          {% if effective_role in ('author', 'admin', 'owner') %}
+          <a href="{{ url_for('kitap_ekle') }}"><i class="fas fa-plus-circle" aria-hidden="true"></i> Kitap Ekle</a>
+          {% endif %}
+          {% if effective_role in ('admin', 'owner') %}
+          <a href="{{ url_for('admin_panel') }}"><i class="fas fa-cog" aria-hidden="true"></i> Yönetim</a>
+          {% endif %}
+          {% if effective_role == 'owner' %}
+          <a href="{{ url_for('tum_kullanicilar') }}"><i class="fas fa-users" aria-hidden="true"></i> Kullanıcılar</a>
+          {% endif %}
+          <a href="{{ url_for('kitaplar') }}">Kitaplar</a>
+          <a href="{{ url_for('profile') }}">
+            <span class="role-badge role-badge--{{ effective_role }}">{{ effective_role | upper }}</span>
+            Profil
+          </a>
+          <a href="{{ url_for('logout') }}">Çıkış</a>
+        {% else %}
+          <a href="{{ url_for('login') }}">Giriş Yap</a>
+          <a href="{{ url_for('register') }}">Kayıt Ol</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-wrapper">
+    <section class="hero">
+      <div class="hero-content">
+        {% block content %}{% endblock %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="#">Hakkımızda</a>
+      <a href="#">İletişim</a>
+      <a href="#">Gizlilik Politikası</a>
+    </div>
+    <div class="footer-social">
+      <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+      <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+      <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+    </div>
+    <p>© 2025 Dokushoka</p>
+  </footer>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="alert-container">
+    {% for category, message in messages %}
+    <div class="alert {% if category=='success' %}alert-success{% elif category=='danger' %}alert-danger{% else %}alert-warning{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const header = document.querySelector('.site-header');
+      const main = document.querySelector('main');
+      const hero = document.querySelector('.hero');
+
+      if (!header || !main) return;
+
+      function updateLayout() {
+        const h = header.offsetHeight;
+        main.style.paddingTop = (h + 16) + 'px';
+        if (hero) hero.style.minHeight = `calc(100vh - ${h}px)`;
+      }
+
+      updateLayout();
+      window.addEventListener('resize', updateLayout);
+
+      window.addEventListener('scroll', function () {
+        if (window.scrollY > 50) {
+          header.classList.add('shrink');
+          document.body.classList.add('header-shrink');
+        } else {
+          header.classList.remove('shrink');
+          document.body.classList.remove('header-shrink');
+        }
+        updateLayout();
+      });
+    });
+  </script>
+
+</body>
+
+</html>

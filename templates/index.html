@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="home-hero">
+  <h1>HOŞ GELDİN</h1>
+  <p>Kitap dünyasına yolculuğa hazır mısın?</p>
+  <a href="{{ url_for('kitaplar') }}" class="btn btn-cta">Kitapları Keşfet</a>
+</section>
+
+<svg class="section-divider" viewBox="0 0 200 8" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 4 Q50 0 100 4 T200 4" stroke="#BC4434" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>
+
+<section class="intro">
+  <h2>Hoş Geldiniz!</h2>
+  <p>
+    Kiraz çiçeklerinin narin güzelliği gibi, Japon edebiyatının derin ve zarif dünyasına hoş geldiniz.
+    Bin yıllık bir geleneğin modern hayallere karıştığı bu sayfalarda, haiku'nun dinginliğinden fantastik
+    maceralara uzanan bir yolculuğa çıkacaksınız. Japonya'nın ruhundan damıtılan her bir kelime, ruhunuzda
+    yeni kapılar açacak. Keyifli bir keşif dileriz!
+  </p>
+</section>
+
+<svg class="section-divider" viewBox="0 0 200 8" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 4 Q50 8 100 4 T200 4" stroke="#1F3A5F" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>
+
+<section class="features">
+  <div class="features-left">
+    <button class="tab-btn active" data-tab="workspace">En sevilen eserler</button>
+    <button class="tab-btn" data-tab="compact">En sevilen yazarlar</button>
+    <button class="tab-btn" data-tab="glance">En son eklenenler</button>
+    <button class="tab-btn" data-tab="split">En çok okunanlar</button>
+  </div>
+  <div class="features-right">
+    <div class="tab-content active" id="workspace">
+      <img src="{{ url_for('static', filename='images/eser_1.jpg') }}" alt="Beş Çember Kitabı kapağı">
+    </div>
+    <div class="tab-content" id="compact">
+      <img src="{{ url_for('static', filename='images/yazar_1.png') }}" alt="Miyamoto Musashi portresi">
+    </div>
+    <div class="tab-content" id="glance">
+      <img src="{{ url_for('static', filename='images/eser_2.jpg') }}" alt="Klasik Japon edebiyatı eseri kapağı">
+    </div>
+    <div class="tab-content" id="split">
+      <img src="{{ url_for('static', filename='images/eser_3.jpg') }}" alt="Popüler Japon romanı kapağı">
+    </div>
+  </div>
+</section>
+
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init({ duration: 800, easing: 'ease-in-out', once: true });
+
+  const buttons = document.querySelectorAll(".tab-btn");
+  const contents = document.querySelectorAll(".tab-content");
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      buttons.forEach(b => b.classList.remove("active"));
+      contents.forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+
+{% endblock %}

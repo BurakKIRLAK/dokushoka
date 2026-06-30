@@ -1,0 +1,24 @@
+services:
+  web:
+    build: .
+    container_name: dokushoka
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      # GELİŞTİRME modunda kod değişikliklerinin container'a anında
+      # yansıması için proje klasörünü mount ediyoruz.
+      # PRODUCTION sunucuda bu satırları KALDIR (image'ın içine
+      # gömülü kodu kullansın, dışarıdan canlı kod mount etme).
+      - .:/app
+      - ./database.db:/app/database.db
+      - ./static/uploads:/app/static/uploads
+    environment:
+      - FLASK_DEBUG=True
+    # Geliştirmede Gunicorn yerine Flask'ın kendi debug sunucusunu
+    # kullanmak hot-reload + hata sayfası için daha pratik.
+    # Production'da bu "command" satırını sil; Dockerfile'daki
+    # Gunicorn komutu devreye girer.
+    command: flask --app app run --host=0.0.0.0 --port=5000 --debug
+    restart: unless-stopped

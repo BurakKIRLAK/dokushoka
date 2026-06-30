@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Profil — Dokushoka{% endblock %}
+{% block content %}
+
+<div class="profile-card">
+    <div class="profile-header">
+        <div class="profile-pic-wrapper">
+            <img src="{{ user[4] | default('/static/images/default.jpg') }}" alt="Profil Fotoğrafı" class="profile-pic" id="profile-preview">
+        </div>
+        <h2>{{ user[0] }} {{ user[1] }}</h2>
+        {% if g.user %}
+        <p class="profile-role-label">
+            <span class="role-badge role-badge--{{ get_effective_role(g.user) }}">
+                {{ get_effective_role(g.user) | upper }}
+            </span>
+        </p>
+        {% endif %}
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="profile-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label for="profile_pic" class="upload-btn" style="display:inline-block; position:static; margin-bottom:1rem;">
+            📷 Fotoğraf Seç
+            <input type="file" name="profile_pic" id="profile_pic" accept="image/*" hidden>
+        </label>
+
+        <div class="profile-field">
+            <label>Ad</label>
+            <span class="field-text">{{ user[0] }}</span>
+            <input type="text" name="first_name" value="{{ user[0] }}" class="field-input">
+            <button type="button" class="edit-btn" aria-label="Düzenle">✏️</button>
+        </div>
+
+        <div class="profile-field">
+            <label>Soyad</label>
+            <span class="field-text">{{ user[1] }}</span>
+            <input type="text" name="last_name" value="{{ user[1] }}" class="field-input">
+            <button type="button" class="edit-btn" aria-label="Düzenle">✏️</button>
+        </div>
+
+        <div class="profile-field">
+            <label>Telefon</label>
+            <span class="field-text">{{ user[3] or '—' }}</span>
+            <input type="text" name="phone" value="{{ user[3] or '' }}" class="field-input">
+            <button type="button" class="edit-btn" aria-label="Düzenle">✏️</button>
+        </div>
+
+        <button type="submit" class="save-btn">Kaydet</button>
+    </form>
+
+    {# --- Yazar Ol bölümü --- #}
+    {% if g.user %}
+        {% set effective_role = get_effective_role(g.user) %}
+        {% if effective_role == 'user' %}
+            {% if pending_request %}
+            <div class="author-request-status">
+                <span class="badge-pending">⏳ Talebiniz inceleniyor</span>
+                <p class="form-hint">Admin onayı bekleniyor. En kısa sürede yanıtlanacaktır.</p>
+            </div>
+            {% else %}
+            <div class="author-request-status">
+                <p class="form-hint">Kitap eklemek ve düzenlemek için yazar olmayı talep edebilirsiniz.</p>
+                <form method="POST" action="{{ url_for('yazar_ol_talebi') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-cta yazar-ol-btn">
+                        <i class="fas fa-pen-nib" aria-hidden="true"></i> Yazar Ol
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        {% elif effective_role in ('author', 'admin', 'owner') %}
+        <div class="author-request-status">
+            <span class="badge-author-active">✅ Yazar yetkisine sahipsiniz</span>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<script>
+document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const field = btn.closest('.profile-field');
+        field.classList.add('editing');
+        btn.style.display = 'none';
+        field.querySelector('.field-input').focus();
+    });
+});
+
+document.getElementById('profile_pic')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            document.getElementById('profile-preview').src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+
+{% endblock %}

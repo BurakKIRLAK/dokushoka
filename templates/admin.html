@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Yönetim Paneli — Dokushoka{% endblock %}
+{% block content %}
+
+<h1 class="page-title"><i class="fas fa-cog" aria-hidden="true"></i> Yönetim Paneli</h1>
+
+{# ---- Bekleyen Yazar Talepleri ---- #}
+<section class="admin-section">
+    <h2 class="admin-section-title">
+        <i class="fas fa-clock" aria-hidden="true"></i>
+        Bekleyen Yazar Talepleri
+        {% if pending_requests %}
+        <span class="badge-count">{{ pending_requests | length }}</span>
+        {% endif %}
+    </h2>
+
+    {% if pending_requests %}
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>E-posta</th>
+                    <th>Tarih</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in pending_requests %}
+                <tr>
+                    <td>{{ req[3] }}</td>
+                    <td>{{ req[4] }}</td>
+                    <td>{{ req[2][:10] }}</td>
+                    <td class="action-cell">
+                        <form method="POST" action="{{ url_for('yazar_talebi_onayla', req_id=req[0]) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-action btn-approve">
+                                <i class="fas fa-check" aria-hidden="true"></i> Onayla
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('yazar_talebi_reddet', req_id=req[0]) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-action btn-reject">
+                                <i class="fas fa-times" aria-hidden="true"></i> Reddet
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="admin-empty">Bekleyen yazar talebi bulunmuyor.</p>
+    {% endif %}
+</section>
+
+<hr class="admin-divider">
+
+{# ---- Mevcut Yazarlar ---- #}
+<section class="admin-section">
+    <h2 class="admin-section-title">
+        <i class="fas fa-pen-nib" aria-hidden="true"></i>
+        Mevcut Yazarlar
+    </h2>
+
+    {% if authors %}
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>E-posta</th>
+                    <th>Eklenen Kitap</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for author in authors %}
+                <tr>
+                    <td>{{ author[1] }}</td>
+                    <td>{{ author[2] }}</td>
+                    <td>{{ author[3] }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('yazar_geri_al', user_id=author[0]) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-action btn-revoke"
+                                    onclick="return confirm('Bu kullanıcının yazarlık yetkisini geri almak istediğinize emin misiniz?')">
+                                <i class="fas fa-user-minus" aria-hidden="true"></i> Yazarlığı Geri Al
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="admin-empty">Henüz yazar bulunmuyor.</p>
+    {% endif %}
+</section>
+
+{% endblock %}
