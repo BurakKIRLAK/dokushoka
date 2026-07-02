@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, abort
 from flask_wtf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
 import sqlite3
 import os
 import secrets
@@ -21,10 +24,55 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 # Session / cookie security hardening
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-# Set Secure=True only when not in local dev (avoids issues over plain HTTP)
-app.config['SESSION_COOKIE_SECURE'] = os.getenv("FLASK_DEBUG", "False").lower() != "true"
+# Set Secure=True only in non-development environments (avoids issues over plain HTTP)
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV', 'production') != 'development'
 
 csrf = CSRFProtect(app)
+
+# ---------------------------------------------------------------------------
+# Rate limiting (Step 1)
+# ---------------------------------------------------------------------------
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://"
+)
+
+# ---------------------------------------------------------------------------
+# HTTP Security Headers via Talisman (Step 4)
+# ---------------------------------------------------------------------------
+
+csp = {
+    'default-src': ["'self'"],
+    'style-src': [
+        "'self'",
+        "'unsafe-inline'",       # required for Jinja2-rendered inline styles
+        'fonts.googleapis.com',
+        'cdnjs.cloudflare.com',
+    ],
+    'font-src': [
+        "'self'",
+        'fonts.gstatic.com',
+    ],
+    'script-src': [
+        "'self'",
+        "'unsafe-inline'",       # required for existing inline JS in templates
+        'cdnjs.cloudflare.com',
+    ],
+    'img-src': ["'self'", 'data:', 'lh3.googleusercontent.com'],  # Google profile pics
+}
+
+Talisman(
+    app,
+    content_security_policy=csp,
+    force_https=False,           # nginx handles HTTPS termination — do not let Talisman redirect
+    strict_transport_security=True,
+    strict_transport_security_max_age=31536000,
+    frame_options='DENY',        # X-Frame-Options: DENY (clickjacking protection)
+    x_content_type_options=True, # X-Content-Type-Options: nosniff
+)
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 PER_PAGE = 12
@@ -262,13 +310,29 @@ def inject_role_helpers():
 # ---------------------------------------------------------------------------
 
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def register():
     if request.method == 'POST':
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
-        email = request.form['email']
-        phone = request.form['phone']
-        password = request.form['password']
+        first_name = request.form.get('first_name', '')
+        last_name = request.form.get('last_name', '')
+        email = request.form.get('email', '')
+        phone = request.form.get('phone', '')
+        password = request.form.get('password', '')
+
+        # Step 6 — Input length validation
+        if len(first_name) > 50:
+            flash('İsim en fazla 50 karakter olabilir.', 'danger')
+            return render_template('register.html')
+        if len(last_name) > 50:
+            flash('Soyisim en fazla 50 karakter olabilir.', 'danger')
+            return render_template('register.html')
+        if len(email) > 254:
+            flash('E-posta adresi en fazla 254 karakter olabilir.', 'danger')
+            return render_template('register.html')
+        if len(phone) > 20:
+            flash('Telefon numarası en fazla 20 karakter olabilir.', 'danger')
+            return render_template('register.html')
+
         hashed_password = generate_password_hash(password)
 
         conn = get_db_connection()
@@ -282,7 +346,8 @@ def register():
             flash('Kayıt başarılı!', 'success')
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
-            flash('Bu e-posta zaten kayıtlı.', 'danger')
+            # Step 2 — Generic message to prevent email enumeration
+            flash('Kayıt tamamlanamadı. Lütfen bilgilerinizi kontrol edin.', 'danger')
         finally:
             conn.close()
 
@@ -290,10 +355,19 @@ def register():
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
 def login():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        email = request.form.get('email', '')
+        password = request.form.get('password', '')
+
+        # Step 6 — Input length validation
+        if len(email) > 254:
+            flash('E-posta adresi en fazla 254 karakter olabilir.', 'danger')
+            return render_template('login.html')
+        if len(password) > 256:
+            flash('Şifre çok uzun.', 'danger')
+            return render_template('login.html')
 
         conn = get_db_connection()
         c = conn.cursor()
@@ -376,9 +450,20 @@ def profile():
     c = conn.cursor()
 
     if request.method == 'POST':
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
-        phone = request.form['phone']
+        first_name = request.form.get('first_name', '')
+        last_name = request.form.get('last_name', '')
+        phone = request.form.get('phone', '')
+
+        # Step 6 — Input length validation
+        if len(first_name) > 50:
+            flash('İsim en fazla 50 karakter olabilir.', 'danger')
+            return redirect(url_for('profile'))
+        if len(last_name) > 50:
+            flash('Soyisim en fazla 50 karakter olabilir.', 'danger')
+            return redirect(url_for('profile'))
+        if len(phone) > 20:
+            flash('Telefon numarası en fazla 20 karakter olabilir.', 'danger')
+            return redirect(url_for('profile'))
 
         profile_pic_file = request.files.get('profile_pic')
         profile_pic_path = None
@@ -674,7 +759,11 @@ def kitap_detay(book_id):
 
         if request.method == 'POST':
             if "yorum" in request.form:
-                yorum = request.form.get("yorum")
+                yorum = request.form.get("yorum", "")
+                # Step 6 — Comment length validation
+                if len(yorum) > 1000:
+                    flash('Yorum en fazla 1000 karakter olabilir.', 'danger')
+                    return redirect(url_for('kitap_detay', book_id=book_id))
                 if user_id and yorum.strip():
                     c.execute(
                         "INSERT INTO comments (book_id, user_id, comment) VALUES (?, ?, ?)",
@@ -688,7 +777,11 @@ def kitap_detay(book_id):
                     rating = int(request.form.get('rating', 0))
                 except (ValueError, TypeError):
                     rating = 0
-                if user_id and 1 <= rating <= 5:  # Server-side bounds check
+                # Step 5 — Explicit rating bounds validation with Turkish flash
+                if not (1 <= rating <= 5):
+                    flash('Geçersiz puan değeri.', 'danger')
+                    return redirect(url_for('kitap_detay', book_id=book_id))
+                if user_id:
                     c.execute("""
                         INSERT INTO ratings (user_id, book_id, rating)
                         VALUES (?, ?, ?)
@@ -759,6 +852,17 @@ def kitap_ekle():
 
         if not baslik or not yazar:
             flash('Başlık ve yazar alanları zorunludur.', 'danger')
+            return render_template('kitap_ekle.html', is_edit=False)
+
+        # Step 6 — Input length validation
+        if len(baslik) > 200:
+            flash('Kitap başlığı en fazla 200 karakter olabilir.', 'danger')
+            return render_template('kitap_ekle.html', is_edit=False)
+        if len(yazar) > 100:
+            flash('Yazar adı en fazla 100 karakter olabilir.', 'danger')
+            return render_template('kitap_ekle.html', is_edit=False)
+        if len(aciklama) > 5000:
+            flash('Açıklama en fazla 5000 karakter olabilir.', 'danger')
             return render_template('kitap_ekle.html', is_edit=False)
 
         resim = ''
@@ -1011,6 +1115,32 @@ def not_found(e):
 @app.errorhandler(500)
 def internal_error(e):
     return render_template('500.html'), 500
+
+
+@app.errorhandler(429)
+def ratelimit_error(e):
+    # Step 1 — Turkish-language rate limit response
+    flash('Çok fazla istek gönderdiniz. Lütfen bir dakika bekleyin.', 'danger')
+    return redirect(url_for('login')), 429
+
+
+# ---------------------------------------------------------------------------
+# Footer static pages (Step 7)
+# ---------------------------------------------------------------------------
+
+@app.route('/hakkimizda')
+def hakkimizda():
+    return render_template('hakkimizda.html')
+
+
+@app.route('/iletisim')
+def iletisim():
+    return render_template('iletisim.html')
+
+
+@app.route('/gizlilik')
+def gizlilik():
+    return render_template('gizlilik.html')
 
 
 # ---------------------------------------------------------------------------

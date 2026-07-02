@@ -53,6 +53,9 @@ dokushoka/
     ├── register.html       # User registration form
     ├── profile.html        # Profile view/edit + profile picture upload + Yazar Ol button
     ├── arama_sonuc.html    # Search results page
+    ├── hakkimizda.html     # About page (/hakkimizda)
+    ├── iletisim.html       # Contact page (/iletisim)
+    ├── gizlilik.html       # Privacy policy page (/gizlilik)
     ├── 404.html            # Custom 404 error page
     └── 500.html            # Custom 500 error page
 ```
@@ -173,6 +176,9 @@ The `role` column only holds `'user'`, `'author'`, or `'admin'`. Owner status is
 | `/admin/yazar/<user_id>/geri-al` | POST | `admin`+ | Revoke author status |
 | `/admin/kullanicilar` | GET | `owner` only | All users panel (owner-exclusive) |
 | `/admin/kullanicilar/<user_id>/rol-degistir` | POST | `owner` only | Promote/demote admin |
+| `/hakkimizda` | GET | No | About page |
+| `/iletisim` | GET | No | Contact page |
+| `/gizlilik` | GET | No | Privacy policy page |
 
 ---
 
@@ -225,6 +231,7 @@ Copy `.env.example` to `.env` and fill in real values. **Never commit `.env`.**
 | `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID | **None — must be set; no hardcoded fallback** |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret | **None — must be set; no hardcoded fallback** |
 | `FLASK_DEBUG` | `"true"` enables debug mode | `"False"` |
+| `FLASK_ENV` | Set to `"development"` locally to disable `SESSION_COOKIE_SECURE` (plain HTTP) | `"production"` (Secure flag active) |
 | `OWNER_EMAIL` | The email address that gets permanent owner status | `""` (no owner if blank) |
 
 > ⚠️ `OWNER_EMAIL` **must** be set in `.env` on the server. Without it, no one has owner access.
@@ -404,9 +411,14 @@ Follow these rules strictly when modifying this project:
 | ✅ Fixed | No book delete route | `/kitap/<id>/sil` with cascade delete of comments and ratings |
 | ✅ Fixed | No "Become an Author" flow | `/yazar-ol` route + `author_requests` table + profile UI |
 | ✅ Fixed | Hardcoded Google OAuth credentials in source code | Removed — `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` must be set in `.env` |
-| ✅ Fixed | No session cookie security flags | `HttpOnly`, `Secure`, `SameSite=Lax` configured in `app.config` |
-| ✅ Fixed | No server-side rating bounds validation | Added `1 <= rating <= 5` check before DB write |
+| ✅ Fixed | No session cookie security flags | `HttpOnly`, `Secure` (env-aware), `SameSite=Lax` configured in `app.config` |
+| ✅ Fixed | No server-side rating bounds validation | Explicit `1 <= rating <= 5` check with Turkish flash message |
 | ✅ Fixed | No custom error pages | `404.html` and `500.html` templates + handlers added |
+| ✅ Fixed | No rate limiting on auth routes | `Flask-Limiter`: 10/min on `/login`, 5/min on `/register`, Turkish 429 flash |
+| ✅ Fixed | Email enumeration on registration | Duplicate-email flash changed to generic message |
+| ✅ Fixed | HTTP security headers missing | `Flask-Talisman` adds CSP, X-Frame-Options: DENY, HSTS, X-Content-Type-Options |
+| ✅ Fixed | No input length limits | Server-side max-length validation on all user-submitted text fields |
+| ✅ Fixed | Footer links pointing to `#` | `/hakkimizda`, `/iletisim`, `/gizlilik` pages created; footer links updated |
 
 ---
 
@@ -416,6 +428,8 @@ Follow these rules strictly when modifying this project:
 |---|---|
 | `Flask==3.1.2` | Web framework |
 | `Flask-WTF` | CSRF protection (`CSRFProtect`) |
+| `Flask-Limiter` | Rate limiting on auth routes (`/login`, `/register`) |
+| `Flask-Talisman` | HTTP security headers (CSP, X-Frame-Options, HSTS, etc.) |
 | `Werkzeug` | Password hashing, `secure_filename`, WSGI utilities |
 | `authlib` | Google OAuth 2.0 (`OAuth` client) |
 | `requests` | HTTP client (used internally by authlib) |
@@ -457,4 +471,4 @@ After any change, mentally (or actually) verify:
 
 ---
 
-*Last updated: 2026-06-30 — Dokushoka*
+*Last updated: 2026-07-02 — Dokushoka*

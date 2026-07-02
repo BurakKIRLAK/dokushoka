@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Hakkımızda — Dokushoka{% endblock %}
+
+{% block content %}
+<div class="static-page-card">
+  <h1 class="static-page-title">Hakkımızda</h1>
+
+  <svg class="static-divider" viewBox="0 0 120 12" aria-hidden="true">
+    <path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6" fill="none" stroke="var(--color-shu)" stroke-width="1.5"/>
+  </svg>
+
+  <div class="static-page-body">
+    <p>
+      <strong>Dokushoka</strong>, Japon edebiyatı temasıyla tasarlanmış bir kitap keşif ve değerlendirme platformudur.
+      Platform; kullanıcıların kitapları keşfetmesine, yorum yapmasına ve puan vermesine olanak tanır. Washi kâğıdını
+      andıran arka planı, torii kapısı logosunu ve <em>Shippori Mincho</em> yazı tipini kullanan Dokushoka; Doğu Asya
+      estetiğini modern web tasarımıyla harmanlıyor.
+    </p>
+
+    <p>
+      Platform, <strong>Burak Kırlak</strong> tarafından kişisel bir proje olarak geliştirilmiştir. Flask (Python)
+      altyapısı üzerine inşa edilen Dokushoka; kullanıcı kaydı ve girişi (Google OAuth dahil), rol tabanlı içerik
+      yönetimi (yazar, yönetici, site sahibi) ve dosya yükleme gibi özellikleri bünyesinde barındırır.
+    </p>
+
+    <p>
+      Projenin kaynak koduna ve gelişim sürecine
+      <a href="https://github.com/BurakKIRLAK" target="_blank" rel="noopener noreferrer">GitHub profili</a>
+      üzerinden ulaşabilirsiniz. Geri bildirimleriniz ve katkılarınız her zaman değerlidir.
+    </p>
+  </div>
+</div>
+{% endblock %}

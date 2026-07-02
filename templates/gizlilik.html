@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Gizlilik Politikası — Dokushoka{% endblock %}
+
+{% block content %}
+<div class="static-page-card">
+  <h1 class="static-page-title">Gizlilik Politikası</h1>
+
+  <svg class="static-divider" viewBox="0 0 120 12" aria-hidden="true">
+    <path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6" fill="none" stroke="var(--color-shu)" stroke-width="1.5"/>
+  </svg>
+
+  <div class="static-page-body">
+
+    <h2>Toplanan Veriler</h2>
+    <p>
+      Dokushoka, kayıt süreci ve platform kullanımı sırasında aşağıdaki kişisel verileri toplar:
+    </p>
+    <ul class="privacy-list">
+      <li><strong>Ad ve soyad</strong> — kayıt formundan veya Google hesabınızdan alınır.</li>
+      <li><strong>E-posta adresi</strong> — hesap oluşturma ve kimlik doğrulama amacıyla kullanılır.</li>
+      <li><strong>Profil fotoğrafı</strong> — isteğe bağlı olarak yüklenebilir; yüklenmezse varsayılan görsel kullanılır.</li>
+      <li><strong>Telefon numarası</strong> — isteğe bağlı profil alanı.</li>
+      <li><strong>Yorumlar ve puanlar</strong> — platforma eklediğiniz kitap yorum ve değerlendirmeleri.</li>
+    </ul>
+
+    <h2>Verilerin Saklanması</h2>
+    <p>
+      Tüm veriler, özel bir sunucuda barındırılan bir SQLite veritabanında saklanır. Şifreler, geri döndürülemez
+      kriptografik karma (Werkzeug PBKDF2) yöntemiyle korunmaktadır; düz metin olarak hiçbir zaman saklanmaz.
+      Yüklenen dosyalar (profil fotoğrafı, kitap kapakları) sunucunun yerel dosya sisteminde tutulur.
+    </p>
+
+    <h2>Üçüncü Taraflarla Paylaşım</h2>
+    <p>
+      Kişisel verileriniz hiçbir üçüncü tarafla pazarlama veya reklam amacıyla paylaşılmaz. Tek istisna,
+      <strong>Google ile Giriş Yap</strong> özelliğidir: Bu özelliği kullanmayı tercih ederseniz kimlik doğrulama
+      işlemi Google'ın OAuth 2.0 altyapısı aracılığıyla gerçekleşir ve bu süreç
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google'ın Gizlilik Politikası</a>
+      kapsamındadır. Dokushoka, Google OAuth işlemi sırasında yalnızca ad, soyad ve e-posta bilgilerine erişir.
+    </p>
+
+    <h2>Kullanıcı Hakları</h2>
+    <p>
+      Hesabınızın silinmesini talep etmek veya saklanan verileriniz hakkında bilgi almak için
+      <a href="mailto:burakhankirlak@outlook.com">burakhankirlak@outlook.com</a> adresine e-posta gönderebilirsiniz.
+      Talepler en geç 30 gün içinde yanıtlanır.
+    </p>
+
+    <h2>Çerez Kullanımı</h2>
+    <p>
+      Dokushoka yalnızca oturum çerezi (session cookie) kullanır. Bu çerez, giriş yapmış kullanıcının kimliğini
+      sunucu tarafında doğrulamak için zorunludur ve tarayıcı kapatıldığında sona erer. Hiçbir izleme, analitik veya
+      reklam çerezi kullanılmamaktadır.
+    </p>
+
+    <p class="privacy-footer-note">
+      <em>Son güncelleme: Temmuz 2025</em>
+    </p>
+
+  </div>
+</div>
+{% endblock %}
