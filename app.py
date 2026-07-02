@@ -55,6 +55,7 @@ csp = {
     'font-src': [
         "'self'",
         'fonts.gstatic.com',
+        'cdnjs.cloudflare.com',  # Font Awesome woff2/woff icon fonts
     ],
     'script-src': [
         "'self'",
